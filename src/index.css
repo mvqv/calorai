@@ -1,0 +1,372 @@
+/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Orange accent palette */
+    --primary: 22 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 22 40% 92%;
+    --secondary-foreground: 22 80% 25%;
+    --accent: 22 60% 94%;
+    --accent-foreground: 22 80% 25%;
+
+    /* Backgrounds */
+    --background: 22 30% 97%;
+    --foreground: 224 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 15% 15%;
+
+    /* Muted */
+    --muted: 22 20% 92%;
+    --muted-foreground: 224 10% 48%;
+
+    /* Border / Input */
+    --border: 22 20% 86%;
+    --input: 22 20% 86%;
+    --ring: 22 100% 60%;
+
+    /* Status */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Chart colors */
+    --chart-1: 22 100% 60%;
+    --chart-2: 200 80% 55%;
+    --chart-3: 142 65% 45%;
+    --chart-4: 280 60% 55%;
+    --chart-5: 40 90% 55%;
+
+    /* Sidebar */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 224 15% 15%;
+    --sidebar-accent: 22 40% 92%;
+    --sidebar-accent-foreground: 22 80% 25%;
+    --sidebar-border: 22 20% 86%;
+    --sidebar-primary: 22 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 22 100% 60%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --primary: 22 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 22 25% 18%;
+    --secondary-foreground: 22 60% 80%;
+    --accent: 22 25% 18%;
+    --accent-foreground: 22 60% 80%;
+    --background: 224 25% 8%;
+    --foreground: 22 10% 92%;
+    --card: 224 20% 12%;
+    --card-foreground: 22 10% 92%;
+    --popover: 224 20% 12%;
+    --popover-foreground: 22 10% 92%;
+    --muted: 224 20% 18%;
+    --muted-foreground: 224 10% 55%;
+    --border: 224 15% 22%;
+    --input: 224 15% 22%;
+    --ring: 22 100% 60%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --chart-1: 22 100% 60%;
+    --chart-2: 200 80% 60%;
+    --chart-3: 142 65% 50%;
+    --chart-4: 280 60% 60%;
+    --chart-5: 40 90% 60%;
+    --sidebar: 224 20% 12%;
+    --sidebar-foreground: 22 10% 92%;
+    --sidebar-accent: 22 25% 18%;
+    --sidebar-accent-foreground: 22 60% 80%;
+    --sidebar-border: 224 15% 22%;
+    --sidebar-primary: 22 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 22 100% 60%;
+  }
+
+  * {
+    @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; background: transparent; }
+  *::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ─── Keyframe animations ─────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInBottom {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(255,107,53,0.35); }
+  70%  { box-shadow: 0 0 0 10px rgba(255,107,53,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes popIn {
+  0%   { transform: scale(0.7) rotate(-4deg); opacity: 0; }
+  65%  { transform: scale(1.08) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes barFill {
+  from { width: 0%; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+  50%       { box-shadow: 0 0 12px 2px rgba(255,107,53,0.25); }
+}
+
+@layer utilities {
+  /* ─── Liquid glass card ─────────────────────────────────────────── */
+  .glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px) saturate(1.5);
+    -webkit-backdrop-filter: blur(14px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+    /* Performance: promote to own layer */
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Stronger glass for overlays */
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Dark mode glass overrides */
+  .dark .glass {
+    background: rgba(30, 34, 48, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.28), 0 1px 4px rgba(0,0,0,0.18);
+  }
+  .dark .glass-strong {
+    background: rgba(24, 28, 40, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.40);
+  }
+
+  /* App clean white background */
+  .app-bg {
+    background: #ffffff;
+    min-height: 100vh;
+  }
+
+  /* Orange gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #ff6b35, #ff9a5c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Orange progress bar fill */
+  .progress-orange {
+    background: linear-gradient(90deg, #ff6b35, #ff9a5c);
+  }
+
+  /* ─── Page entrance animations ──────────────────────────────────── */
+  .page-enter {
+    animation: fadeInUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.22s ease both;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-slide-up {
+    animation: slideInBottom 0.30s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Staggered children: add delay via style */
+  .stagger-children > * {
+    animation: fadeInUp 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+  /* ─── Interactive button press effect ──────────────────────────── */
+  .btn-press {
+    transition: transform 0.10s ease, box-shadow 0.10s ease, opacity 0.10s ease;
+    will-change: transform;
+  }
+  .btn-press:active {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+
+  .btn-press-sm:active {
+    transform: scale(0.93);
+  }
+
+  /* ─── Tap ripple (for glass buttons) ───────────────────────────── */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,107,53,0.18) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .ripple-container:active::after {
+    opacity: 1;
+    transition: opacity 0s;
+  }
+
+  /* ─── Pulse on primary CTA ──────────────────────────────────────── */
+  .btn-pulse {
+    animation: pulseRing 2.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+
+  /* ─── Water glass pop ───────────────────────────────────────────── */
+  .glass-pop {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background-color 0.2s ease,
+                color 0.2s ease;
+  }
+  .glass-pop:active {
+    transform: scale(0.88);
+  }
+
+  /* ─── Toggle switch smooth ──────────────────────────────────────── */
+  .toggle-track {
+    transition: background-color 0.2s ease;
+    will-change: background-color;
+  }
+  .toggle-thumb {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
+  }
+
+  /* ─── Card hover lift ───────────────────────────────────────────── */
+  .card-lift {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    will-change: transform;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.11), 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .card-lift:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* ─── Skeleton shimmer ──────────────────────────────────────────── */
+  .shimmer {
+    background: linear-gradient(90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.12) 50%,
+      hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* ─── Bottom nav active indicator ──────────────────────────────── */
+  .nav-indicator {
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.22s ease;
+  }
+
+  /* ─── Input focus ring ──────────────────────────────────────────── */
+  .input-focus-ring {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input-focus-ring:focus-within {
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
+  }
+
+  /* ─── Progress bar smooth fill ──────────────────────────────────── */
+  .progress-fill {
+    transition: width 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: width;
+  }
+
+  /* ─── Circular ring draw ────────────────────────────────────────── */
+  .ring-draw {
+    transition: stroke-dashoffset 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: stroke-dashoffset;
+  }
+}
+
+
