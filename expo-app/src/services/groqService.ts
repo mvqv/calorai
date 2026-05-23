@@ -1,8 +1,8 @@
-import { hasSupabaseEnv, supabase } from '@/lib/supabase';
+import { hasPocketBaseEnv, pb } from '@/lib/pocketbase';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-const edgeFunctionUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/analyze-food-image` : null;
+// The analyze-food-image endpoint — can be a PocketBase hook, a separate
+// serverless function, or any HTTP endpoint that accepts the same payload.
+const analyzeUrl = process.env.EXPO_PUBLIC_ANALYZE_FOOD_URL ?? null;
 
 export interface AnalyzedFood {
   name: string;
@@ -25,24 +25,25 @@ const toNum = (value: unknown, decimals = 1): number => {
   return parseFloat(parsed.toFixed(decimals));
 };
 
-export async function analyzeFoodImage(imageBase64: string, mimeType = 'image/jpeg'): Promise<AnalyzeFoodResponse> {
-  if (!hasSupabaseEnv || !edgeFunctionUrl || !supabaseAnonKey) {
-    throw new Error('Supabase env is not configured');
+export async function analyzeFoodImage(
+  imageBase64: string,
+  mimeType = 'image/jpeg',
+): Promise<AnalyzeFoodResponse> {
+  if (!hasPocketBaseEnv || !analyzeUrl) {
+    throw new Error('EXPO_PUBLIC_ANALYZE_FOOD_URL не настроен.');
   }
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token || supabaseAnonKey;
+  // Use the PocketBase auth token if the user is logged in, otherwise send
+  // an unauthenticated request (the server can decide whether to allow it).
+  const token = pb.authStore.isValid ? pb.authStore.token : '';
 
-  const response = await fetch(edgeFunctionUrl, {
+  const response = await fetch(analyzeUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({
-      imageBase64,
-      mimeType,
-    }),
+    body: JSON.stringify({ imageBase64, mimeType }),
   });
 
   const result = await response.json();
@@ -60,6 +61,7 @@ export async function analyzeFoodImage(imageBase64: string, mimeType = 'image/jp
       fatPer100g: toNum(food.fatPer100g, 1),
       carbsPer100g: toNum(food.carbsPer100g, 1),
     })),
-    rawResponse: typeof result.rawResponse === 'string' ? result.rawResponse : undefined,
+    rawResponse:
+      typeof result.rawResponse === 'string' ? result.rawResponse : undefined,
   };
 }

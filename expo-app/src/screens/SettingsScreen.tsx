@@ -4,7 +4,7 @@ import { Alert, View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/stores/appStore';
-import { supabase } from '@/lib/supabase';
+import { pb } from '@/lib/pocketbase';
 import { cancelReminder, ensureNotificationPermissions, scheduleMealReminders, scheduleWaterReminders } from '@/lib/notifications';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useI18n, type Lang, LANG_LABELS } from '@/contexts/i18nContext';
@@ -80,16 +80,22 @@ export default function SettingsScreen({ navigation }: any) {
       return;
     }
 
-    const { error } = await supabase.auth.updateUser({ password: newPwd });
-    if (error) {
-      Alert.alert('Password update failed', error.message);
-      return;
+    try {
+      const userId = pb.authStore.model?.id;
+      if (!userId) throw new Error('Not authenticated');
+      await pb.collection('users').update(userId, {
+        password: newPwd,
+        passwordConfirm: newPwd,
+        oldPassword: '',
+      });
+      setNewPwd('');
+      setConfirmPwd('');
+      setSection(null);
+      Alert.alert('Done', t('password_updated'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Password update failed';
+      Alert.alert('Password update failed', msg);
     }
-
-    setNewPwd('');
-    setConfirmPwd('');
-    setSection(null);
-    Alert.alert('Done', t('password_updated'));
   };
 
   const handleDeleteAccount = async () => {
@@ -99,13 +105,16 @@ export default function SettingsScreen({ navigation }: any) {
         text: t('confirm'),
         style: 'destructive',
         onPress: async () => {
-          const { error } = await supabase.rpc('delete_own_account');
-          if (error) {
-            Alert.alert('Delete failed', error.message);
-            return;
+          try {
+            const userId = pb.authStore.model?.id;
+            if (!userId) throw new Error('Not authenticated');
+            await pb.collection('users').delete(userId);
+            await signOut();
+            setOnboardingComplete(false);
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Delete failed';
+            Alert.alert('Delete failed', msg);
           }
-          await signOut();
-          setOnboardingComplete(false);
         },
       },
     ]);

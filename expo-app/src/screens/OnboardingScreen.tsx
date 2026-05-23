@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { useAppStore } from '@/stores/appStore';
 import { useI18n } from '@/contexts/i18nContext';
 import { createUserProfile } from '@/lib/calorieCalculator';
-import { supabase } from '@/lib/supabase';
+import { pb } from '@/lib/pocketbase';
 import { COLORS, SIZES, FONTS } from '@/constants/theme';
 import type { Gender, ActivityLevel, Goal } from '@/types';
 
@@ -68,9 +68,8 @@ export default function OnboardingScreen({ navigation }: any) {
     setOnboardingComplete(true);
 
     if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      try {
+        await pb.collection('users').update(user.id, {
           age: profile.age,
           weight: profile.weight,
           height: profile.height,
@@ -82,15 +81,13 @@ export default function OnboardingScreen({ navigation }: any) {
           fat_target: profile.fatTarget,
           carbs_target: profile.carbsTarget,
           onboarding_complete: true,
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        Alert.alert('Profile save failed', error.message);
+        });
+        await refreshProfile();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Profile save failed';
+        Alert.alert('Profile save failed', msg);
         return;
       }
-
-      await refreshProfile();
     }
 
     navigation.replace('Main');

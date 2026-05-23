@@ -65,7 +65,7 @@ export default function LoginScreen({ navigation }: any) {
             <Text style={styles.subtitle}>{t('have_account')}</Text>
             {!authEnabled && (
               <Text style={styles.notice}>
-                EXPO_PUBLIC_SUPABASE_URL и EXPO_PUBLIC_SUPABASE_ANON_KEY не настроены.
+                EXPO_PUBLIC_POCKETBASE_URL не настроен.
               </Text>
             )}
 

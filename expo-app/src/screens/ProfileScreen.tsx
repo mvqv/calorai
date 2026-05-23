@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { useAppStore } from '@/stores/appStore';
 import { useI18n } from '@/contexts/i18nContext';
 import { createUserProfile } from '@/lib/calorieCalculator';
-import { supabase } from '@/lib/supabase';
+import { pb } from '@/lib/pocketbase';
 import { COLORS, SIZES, FONTS } from '@/constants/theme';
 import { ArrowLeft, Save } from 'lucide-react-native';
 import type { Gender, ActivityLevel, Goal } from '@/types';
@@ -54,9 +54,8 @@ export default function ProfileScreen({ navigation }: any) {
     setProfile(newProfile);
 
     if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      try {
+        await pb.collection('users').update(user.id, {
           display_name: displayName.trim() || null,
           age: newProfile.age,
           weight: newProfile.weight,
@@ -68,15 +67,13 @@ export default function ProfileScreen({ navigation }: any) {
           protein_target: newProfile.proteinTarget,
           fat_target: newProfile.fatTarget,
           carbs_target: newProfile.carbsTarget,
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        Alert.alert('Profile update failed', error.message);
+        });
+        await refreshProfile();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Profile update failed';
+        Alert.alert('Profile update failed', msg);
         return;
       }
-
-      await refreshProfile();
     }
 
     navigation.goBack();

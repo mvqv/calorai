@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { User } from '@supabase/supabase-js';
+import { hasPocketBaseEnv, pb } from '@/lib/pocketbase';
 import { createUserProfile } from '@/lib/calorieCalculator';
-import { hasSupabaseEnv, supabase } from '@/lib/supabase';
 import type { ActivityLevel, Gender, Goal, UserProfile } from '@/types';
 
+// Shape of the user profile stored in PocketBase's `users` collection.
+// All profile fields live directly on the user record (no separate profiles table).
 export interface Profile {
   id: string;
-  email: string | null;
+  email: string;
   display_name: string | null;
   role: 'user' | 'admin';
   age: number | null;
@@ -20,11 +21,11 @@ export interface Profile {
   fat_target: number | null;
   carbs_target: number | null;
   onboarding_complete: boolean;
-  created_at: string;
+  created: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: Profile | null;
   profile: Profile | null;
   loading: boolean;
   authEnabled: boolean;
@@ -35,6 +36,27 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function recordToProfile(record: Record<string, unknown>): Profile {
+  return {
+    id: record.id as string,
+    email: (record.email as string) ?? '',
+    display_name: (record.display_name as string | null) ?? null,
+    role: (record.role as 'user' | 'admin') ?? 'user',
+    age: (record.age as number | null) ?? null,
+    weight: (record.weight as number | null) ?? null,
+    height: (record.height as number | null) ?? null,
+    gender: (record.gender as Gender | null) ?? null,
+    activity_level: (record.activity_level as ActivityLevel | null) ?? null,
+    goal: (record.goal as Goal | null) ?? null,
+    daily_calorie_target: (record.daily_calorie_target as number | null) ?? null,
+    protein_target: (record.protein_target as number | null) ?? null,
+    fat_target: (record.fat_target as number | null) ?? null,
+    carbs_target: (record.carbs_target as number | null) ?? null,
+    onboarding_complete: Boolean(record.onboarding_complete),
+    created: (record.created as string) ?? '',
+  };
+}
 
 export function toUserProfile(profile: Profile | null): UserProfile | null {
   if (
@@ -68,105 +90,114 @@ export function toUserProfile(profile: Profile | null): UserProfile | null {
   };
 }
 
-async function getProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (error) {
-    console.error('getProfile error:', error);
+async function fetchProfile(userId: string): Promise<Profile | null> {
+  try {
+    const record = await pb.collection('users').getOne(userId);
+    return recordToProfile(record as unknown as Record<string, unknown>);
+  } catch (err) {
+    console.error('fetchProfile error:', err);
     return null;
   }
-
-  return data as Profile | null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(hasSupabaseEnv);
+  const [loading, setLoading] = useState(hasPocketBaseEnv);
 
   const refreshProfile = async () => {
-    if (!hasSupabaseEnv || !user) {
+    if (!hasPocketBaseEnv || !pb.authStore.isValid) {
       setProfile(null);
       return;
     }
-
-    const nextProfile = await getProfile(user.id);
-    setProfile(nextProfile);
+    const model = pb.authStore.model;
+    if (!model) return;
+    const next = await fetchProfile(model.id);
+    setProfile(next);
   };
 
   useEffect(() => {
-    if (!hasSupabaseEnv) {
+    if (!hasPocketBaseEnv) {
       setLoading(false);
       return;
     }
 
-    supabase.auth
-      .getSession()
-      .then(async ({ data: { session } }) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const nextProfile = await getProfile(session.user.id);
-          setProfile(nextProfile);
+    // Restore session from AsyncStorage and load profile
+    const init = async () => {
+      try {
+        if (pb.authStore.isValid && pb.authStore.model) {
+          // Refresh the token to make sure it's still valid
+          await pb.collection('users').authRefresh();
+          const next = await fetchProfile(pb.authStore.model.id);
+          setProfile(next);
         }
-      })
-      .finally(() => setLoading(false));
+      } catch {
+        pb.authStore.clear();
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
+    init();
 
-      if (session?.user) {
-        const nextProfile = await getProfile(session.user.id);
-        setProfile(nextProfile);
+    // Subscribe to auth state changes
+    const unsubscribe = pb.authStore.onChange(async (_token, model) => {
+      if (model) {
+        const next = await fetchProfile(model.id);
+        setProfile(next);
       } else {
         setProfile(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo<AuthContextType>(
     () => ({
-      user,
+      user: profile,
       profile,
       loading,
-      authEnabled: hasSupabaseEnv,
+      authEnabled: hasPocketBaseEnv,
       signIn: async (email: string, password: string) => {
-        if (!hasSupabaseEnv) {
-          return { error: 'EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY not configured' };
+        if (!hasPocketBaseEnv) {
+          return { error: 'EXPO_PUBLIC_POCKETBASE_URL не настроен.' };
         }
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error: error?.message ?? null };
+        try {
+          await pb.collection('users').authWithPassword(email, password);
+          return { error: null };
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Login failed';
+          return { error: msg };
+        }
       },
       signUp: async (email: string, password: string, displayName: string) => {
-        if (!hasSupabaseEnv) {
-          return { error: 'EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY not configured' };
+        if (!hasPocketBaseEnv) {
+          return { error: 'EXPO_PUBLIC_POCKETBASE_URL не настроен.' };
         }
-
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { display_name: displayName } },
-        });
-        return { error: error?.message ?? null };
+        try {
+          await pb.collection('users').create({
+            email,
+            password,
+            passwordConfirm: password,
+            display_name: displayName || null,
+          });
+          // Auto sign-in after registration
+          await pb.collection('users').authWithPassword(email, password);
+          return { error: null };
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Registration failed';
+          return { error: msg };
+        }
       },
       signOut: async () => {
-        if (hasSupabaseEnv) {
-          await supabase.auth.signOut();
-        }
-        setUser(null);
+        pb.authStore.clear();
         setProfile(null);
       },
       refreshProfile,
     }),
-    [loading, profile, user]
+    [loading, profile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

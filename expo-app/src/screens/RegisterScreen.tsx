@@ -53,7 +53,7 @@ export default function RegisterScreen({ navigation }: any) {
         <Text style={styles.title}>{t('sign_up')}</Text>
         {!authEnabled && (
           <Text style={styles.notice}>
-            EXPO_PUBLIC_SUPABASE_URL и EXPO_PUBLIC_SUPABASE_ANON_KEY не настроены.
+            EXPO_PUBLIC_POCKETBASE_URL не настроен.
           </Text>
         )}
 
