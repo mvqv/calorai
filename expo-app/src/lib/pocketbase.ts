@@ -1,30 +1,42 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import PocketBase, { AsyncAuthStore } from 'pocketbase';
+// Use CJS build explicitly — Metro bundler has issues with the default .mjs entry
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PocketBase = require('pocketbase/cjs');
 
-const pbUrl = process.env.EXPO_PUBLIC_POCKETBASE_URL;
+const pbUrl = process.env.EXPO_PUBLIC_POCKETBASE_URL ?? 'http://192.168.1.103:8090';
 
-export const hasPocketBaseEnv = Boolean(pbUrl);
+console.log('[PocketBase] URL:', pbUrl);
 
-// AsyncAuthStore persists the auth token in AsyncStorage between app launches.
-// The initial value is loaded lazily — PocketBase will restore the session
-// on the first call that checks authStore.isValid.
-const store = new AsyncAuthStore({
-  save: async (serialized) => {
-    await AsyncStorage.setItem('pb_auth', serialized);
-  },
-  initial: '',
-  clear: async () => {
-    await AsyncStorage.removeItem('pb_auth');
-  },
+export const hasPocketBaseEnv = true; // URL is always set (hardcoded fallback)
+
+export const pb: InstanceType<typeof PocketBase> = new PocketBase(pbUrl);
+
+// Persist auth token in AsyncStorage so the session survives app restarts
+pb.authStore.onChange(async (token) => {
+  try {
+    if (token) {
+      await AsyncStorage.setItem('pb_auth_token', token);
+      await AsyncStorage.setItem('pb_auth_model', JSON.stringify(pb.authStore.model));
+    } else {
+      await AsyncStorage.removeItem('pb_auth_token');
+      await AsyncStorage.removeItem('pb_auth_model');
+    }
+  } catch (e) {
+    console.warn('[PocketBase] Failed to persist auth:', e);
+  }
 });
 
-export const pb = new PocketBase(pbUrl ?? 'http://localhost:8090', store);
-
-// Restore persisted auth on startup
-AsyncStorage.getItem('pb_auth')
-  .then((raw) => {
-    if (raw) {
-      store.save(raw);
+// Restore session on startup
+AsyncStorage.multiGet(['pb_auth_token', 'pb_auth_model'])
+  .then(([[, token], [, modelRaw]]) => {
+    if (token && modelRaw) {
+      try {
+        const model = JSON.parse(modelRaw);
+        pb.authStore.save(token, model);
+        console.log('[PocketBase] Session restored for:', model?.email);
+      } catch {
+        // ignore parse errors
+      }
     }
   })
   .catch(() => {});
